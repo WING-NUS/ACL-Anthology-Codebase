@@ -111,25 +111,33 @@ OptionParser.new do |opts|
   opts.on_tail("-z", "--make-zip") do |v| options.zip = v end
 end.parse!
 
-ax2ac = AnthoXML2AcmCSV.new
-if options.zip 
-  # make csv file
-  rootname = File.basename(ARGV[0].gsub(/.xml/,""))
-  csv = File.new("/tmp/#{rootname}.csv","w")
-  csv.print ax2ac.process_file(ARGV[0])
-  csv.close
+ARGV.each do |argv|
+  ax2ac = AnthoXML2AcmCSV.new
+  if options.zip 
+    # make csv file
+    rootname = File.basename(argv.gsub(/.xml/,""))
+    csv = File.new("/tmp/#{rootname}.csv","w")
+    csv.print ax2ac.process_file(argv)
+    csv.close
 
-  # compile list of files
-  filelist = ax2ac.compile_filelist(ARGV[0])
+    # compile list of files
+    filelist = ax2ac.compile_filelist(argv)
     
-  # make zipfile
-  Zip::ZipFile.open("#{rootname}.zip", Zip::ZipFile::CREATE) { |zf|
-    zf.mkdir(rootname)
-    filelist.each do |f|
-      zf.add("#{rootname}/" + File.basename(f),f)
-    end
-    zf.add("#{rootname}/#{rootname}.csv","/tmp/#{rootname}.csv")
-  }
-else
-  ax2ac.process_file(ARGV[0])
+    # make zipfile
+    Zip::ZipFile.open("#{rootname}.zip", Zip::ZipFile::CREATE) { |zf|
+      zf.mkdir(rootname)
+      filelist.each do |f|
+        if !File.exists?(f) 
+          $stderr.puts "# #{@@PROG_NAME} warn\t\tFile \"#{f}\" does not exist!\n" 
+        else
+          zf.add("#{rootname}/" + File.basename(f),f)
+        end
+      end
+      zf.add("#{rootname}/#{rootname}.csv","/tmp/#{rootname}.csv")
+    }
+
+    File.unlink("/tmp/#{rootname}.csv")
+  else
+    print ax2ac.process_file(argv)
+  end
 end
