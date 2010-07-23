@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
 # -*- ruby -*-
-# Version 081028
 @@BASE_DIR = "/home/antho/"
 $:.unshift("#{@@BASE_DIR}/lib/")
 require 'rubygems'
 require 'optparse'
+require 'ostruct'
 require 'rexml/document'
+require 'zip/zip'
 require 'time'
 include REXML
 
@@ -26,32 +27,29 @@ trap "SIGINT", int_handler
 ############################################################
 # PUT CLASS DEFINITION HERE
 class AnthoXML2AcmCSV
-  def initialize()
-  end
-
   def compile_filelist(filename)
     infile = File.new(filename)
     in_doc = Document.new infile
     volume_id = in_doc.elements["volume"].attributes["id"]
 
     # run through paper elements
-    count = 0
     filelist = Array.new
+    filelist << filename
     in_doc.elements.each("*/paper/") { |e| 
-      count += 1 
-      if count == 1 then next end
+      filelist << File.dirname(filename) + "/" + handle_ee(e,volume_id) + ".pdf"
     }
+    return filelist
   end
 
   def process_file(filename)
     infile = File.new(filename)
     in_doc = Document.new infile
     volume_id = in_doc.elements["volume"].attributes["id"]
-   
+ 
     # insert volume first line
-    print "http://www.aclweb.org/anthology/"
+    retval = "http://www.aclweb.org/anthology/"
     volume_url = File.basename(filename).gsub /\.xml/, ".pdf"
-    print "#{volume_url}\n"
+    retval += "#{volume_url}\n"
  
     # insert paper elements
     count = 0
@@ -73,8 +71,9 @@ class AnthoXML2AcmCSV
 
       # handle electronic edition URL 
       row_elements << "http://www.aclweb.org/anthology/" + handle_ee(e, volume_id)
-      print row_elements.join(",") + "\n"
-   }
+      retval += row_elements.join(",") + "\n"
+    }
+    return retval
   end
 
   def handle_pages(e)
@@ -101,14 +100,36 @@ end
 ############################################################
 
 # set up options
+options = OpenStruct.new
+options.zip = false
 OptionParser.new do |opts|
   opts.banner = "usage: #{@@PROG_NAME} [options] file_name"
 
   opts.separator ""
   opts.on_tail("-h", "--help", "Show this message") do STDERR.puts opts; exit end
   opts.on_tail("-v", "--version", "Show version") do STDERR.puts "#{@@PROG_NAME} " + @@VERSION.join('.'); exit end
+  opts.on_tail("-z", "--make-zip") do |v| options.zip = v end
 end.parse!
 
 ax2ac = AnthoXML2AcmCSV.new
-ax2ac.process_file(ARGV[0])
-ax2ac.compile_filelist(ARGV[0])
+if options.zip 
+  # make csv file
+  rootname = File.basename(ARGV[0].gsub(/.xml/,""))
+  csv = File.new("/tmp/#{rootname}.csv","w")
+  csv.print ax2ac.process_file(ARGV[0])
+  csv.close
+
+  # compile list of files
+  filelist = ax2ac.compile_filelist(ARGV[0])
+    
+  # make zipfile
+  Zip::ZipFile.open("#{rootname}.zip", Zip::ZipFile::CREATE) { |zf|
+    zf.mkdir(rootname)
+    filelist.each do |f|
+      zf.add("#{rootname}/" + File.basename(f),f)
+    end
+    zf.add("#{rootname}/#{rootname}.csv","/tmp/#{rootname}.csv")
+  }
+else
+  ax2ac.process_file(ARGV[0])
+end
