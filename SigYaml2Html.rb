@@ -35,12 +35,12 @@ class SigYaml2Html
 <script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
 <script type="text/javascript">_uacct = "UA-2482907-1";urchinTracker();</script>
 </div></body></html>
-  @@
 FOOT
 
   def process_file(filename)
     yaml = YAML::load_file(filename)
-    
+
+    $stderr.puts "# #{@@PROG_NAME} info\t\tWorking on \"#{filename}\"\n"    
     puts handle_header(yaml["Name"],yaml["ShortName"],yaml["URL"])
 
     toc_buf = "<div id=\"toc\" class=\"toc\"><table>"
@@ -65,6 +65,7 @@ FOOT
          elsif (v.class == Hash) # pointer 
             body_buf += handle_pointer(v,label)
             toc_buf += "<td><a href=\"##{label}\">#{v["Name"]}</a></td>"
+            $stderr.print "# Handling pointer as #{label}\n"
          else 
             puts "# {@@PROG_NAME} fatal\t\tUnknown line \"#{v}\""
             exit(1)
@@ -83,6 +84,13 @@ FOOT
     puts FOOTER
   end
    
+  def check_bib(path,label)
+    if (File.exists?("#{path}/#{label}.bib"))
+      return " [<a href=\"#{path}/#{label}.bib\">bib</a>]"
+    end
+    return ""
+  end
+  
   def handle_antho_id(v,label)
     name = "myname"
     retval = ""
@@ -104,18 +112,23 @@ FOOT
         retval += "  <li> <a name=\"#{label}\"></a><h2>#{name}</h2><p> "
 
         # check for full volume
-        if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{venue_offset}.pdf"))
-          retval += "<li><a href=\"#{letter}/#{prefix}/#{prefix}-#{venue_offset}.pdf\">#{prefix}-#{venue_offset}</a>"
+        v2_offset = venue_offset
+        if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{v.split("")[4].to_s}.pdf"))
+          v2_offset = v.split("")[4].to_s
+        end
+
+        if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{v2_offset}.pdf"))
+          retval += "<li><a href=\"#{letter}/#{prefix}/#{prefix}-#{v2_offset}.pdf\">#{prefix}-#{v2_offset}</a>"
           # check for bib
-          if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{venue_offset}.bib"))
-            retval += " [<a href=\"#{letter}/#{prefix}/#{prefix}-#{venue_offset}.bib\">.bib</a>]"
-          end
+          retval += check_bib("#{ANTHO_PATH}/#{letter}/#{prefix}","#{prefix}-#{v2_offset}")
           retval += ": <b>Entire Volume</b></li>\n"
         end
   
         # check for front matter
         if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{v}.pdf"))
-          retval += "<li><a href=\"#{letter}/#{prefix}/#{v}.pdf\">#{v}</a>: <i>Front Matter</i></p>\n"
+          retval += "<li><a href=\"#{letter}/#{prefix}/#{v}.pdf\">#{v}</a>"
+          retval += check_bib("#{ANTHO_PATH}/#{letter}/#{prefix}","#{v}")
+          retval += ": <i>Front Matter</i></p>\n"
         end 
 
         saw_header = true
@@ -128,9 +141,7 @@ FOOT
       retval += ".pdf\">#{prefix}-#{id}</a>"
 
       # check for bib
-      if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{id}.bib"))
-        retval += " [<a href=\"#{letter}/#{prefix}/#{prefix}-#{id}.bib\">.bib</a>]"
-      end
+      retval += check_bib("#{ANTHO_PATH}/#{letter}/#{prefix}","#{prefix}-#{id}")
       retval += ": "
 
       # handle authors of individual papers
