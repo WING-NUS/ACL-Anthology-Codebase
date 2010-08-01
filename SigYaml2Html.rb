@@ -27,13 +27,15 @@ trap "SIGINT", int_handler
 ############################################################
 # PUT CLASS DEFINITION HERE
 class SigYaml2Html
-  @@ext_image_html = "<img width=\"10px\" height=\"10px\" src=\"images/external.gif\" border=\"0\" />"
-  @@footer = <<FOOT
+  ANTHO_PATH = "#{@@BASE_DIR}/public_html/"
+  EXT_IMAGE_HTML = "<img width=\"10px\" height=\"10px\" src=\"images/external.gif\" border=\"0\" />"
+  FOOTER = <<FOOT
 <hr><div class="footer">
 <a href="index.html">Back to the ACL Anthology Home</a></p>
 <script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
 <script type="text/javascript">_uacct = "UA-2482907-1";urchinTracker();</script>
 </div></body></html>
+  @@
 FOOT
 
   def process_file(filename)
@@ -59,6 +61,7 @@ FOOT
             (retval,name) = handle_antho_id(v,label)
             body_buf += retval
             toc_buf += "<td><a href=\"##{label}\">#{name}</a></td>"
+            $stderr.print "# Handling #{v} as #{label}\n"
          elsif (v.class == Hash) # pointer 
             body_buf += handle_pointer(v,label)
             toc_buf += "<td><a href=\"##{label}\">#{v["Name"]}</a></td>"
@@ -77,9 +80,94 @@ FOOT
 
     puts toc_buf
     puts body_buf
-    puts @@footer
+    puts FOOTER
   end
+   
+  def handle_antho_id(v,label)
+    name = "myname"
+    retval = ""
+    letter = v.split("")[0]
+    short_year = v.split("")[1..2].to_s
+    prefix = letter.to_s + short_year
+    path = "#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}.xml"
+    venue_offset = v.split("")[4..5].to_s
+
+    # parse file
+    file = File.new(path)
+    doc = REXML::Document.new file
+    saw_header = false
+    doc.elements.each("*/paper") { |p| 
+      p_offset = p.attributes["id"].split("")[0..1].to_s 
+      if (p_offset != venue_offset) then next end
+      if !saw_header # handle the header
+        name = p.elements["title"].text 
+        retval += "  <li> <a name=\"#{label}\"></a><h2>#{name}</h2><p> "
+
+        # check for full volume
+        if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{venue_offset}.pdf"))
+          retval += "<li><a href=\"#{letter}/#{prefix}/#{prefix}-#{venue_offset}.pdf\">#{prefix}-#{venue_offset}</a>"
+          # check for bib
+          if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{venue_offset}.bib"))
+            retval += " [<a href=\"#{letter}/#{prefix}/#{prefix}-#{venue_offset}.bib\">.bib</a>]"
+          end
+          retval += ": <b>Entire Volume</b></li>\n"
+        end
   
+        # check for front matter
+        if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{v}.pdf"))
+          retval += "<li><a href=\"#{letter}/#{prefix}/#{v}.pdf\">#{v}</a>: <i>Front Matter</i></p>\n"
+        end 
+
+        saw_header = true
+        next
+      end
+
+      # handle individual papers
+      id = p.attributes["id"]
+      retval += "<li><a href=\"#{letter}/#{prefix}/#{prefix}-#{id}"
+      retval += ".pdf\">#{prefix}-#{id}</a>"
+
+      # check for bib
+      if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{id}.bib"))
+        retval += " [<a href=\"#{letter}/#{prefix}/#{prefix}-#{id}.bib\">.bib</a>]"
+      end
+      retval += ": "
+
+      # handle authors of individual papers
+      author_array = Array.new
+      had_authors = false
+      authors = p.elements.each("author") { |a|
+        author_parts = Array.new
+        had_authors = true
+        if (a.text != nil)
+          author_buf = "<author>" + a.text + "</author>"
+        else 
+          a.elements.each { |part|
+            author_parts << part.text
+          }  
+          author_buf = "<author>" + author_parts.join(" ") + "</author>"
+        end
+        author_array << author_buf
+      }
+      if had_authors
+        retval += "<b>" + author_array.join("; ") + "</b><br/>" 
+      end
+ 
+      # handle title of paper
+      retval += "<i>#{p.elements["title"].text}</i></li>\n"
+    }
+    return retval, name
+  end
+
+  def handle_pointer(v,label)
+    retval = "  <li> <a name=\"#{label}\"></a><h2>#{v["Name"]}</h2><p> "
+    if (v["URL"])
+      retval += " <a href=\"#{v["URL"]}\">To Meeting Home Page</a> #{EXT_IMAGE_HTML}"
+    end
+    retval += "</li>\n"
+    return retval 
+  end
+
   def handle_header(n,sn,u) 
     retval = <<HEAD
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -123,25 +211,10 @@ function toggleLayer( whichLayer ) {
 <h1>#{n}</h1>
 HEAD
     if (u) 
-      retval += "<p><a href=\"#{u}\">To #{sn} Home Page</a> #{@@ext_image_html}<p>"
+      retval += "<p><a href=\"#{u}\">To #{sn} Home Page</a> #{EXT_IMAGE_HTML}<p>"
     end 
     retval += "&raquo; <a href=\"javascript:toggleLayer('toc')\">Toggle Table of Contents</a> <br/>"
     return retval
-  end
-
-  def handle_antho_id(v,label)
-    name = "myname"
-    retval = "#{v}"
-    return retval, name
-  end
-
-  def handle_pointer(v,label)
-    retval = "  <li> <a name=\"#{label}\"></a><h2>#{v["Name"]}</h2><p> "
-    if (v["URL"])
-      retval += " <a href=\"#{v["URL"]}\">To Meeting Home Page</a> #{@@ext_image_html}"
-    end
-    retval += "</li>\n"
-    return retval 
   end
 end
 
