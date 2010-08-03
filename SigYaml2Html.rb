@@ -84,8 +84,8 @@ FOOT
     puts FOOTER
   end
    
-  def check_bib(path,label)
-    if (File.exists?("#{path}/#{label}.bib"))
+  def check_bib(fs_path,path,label)
+    if (File.exists?("#{fs_path}/#{path}/#{label}.bib"))
       return " [<a href=\"#{path}/#{label}.bib\">bib</a>]"
     end
     return ""
@@ -120,14 +120,14 @@ FOOT
         if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{v2_offset}.pdf"))
           retval += "<li><a href=\"#{letter}/#{prefix}/#{prefix}-#{v2_offset}.pdf\">#{prefix}-#{v2_offset}</a>"
           # check for bib
-          retval += check_bib("#{ANTHO_PATH}/#{letter}/#{prefix}","#{prefix}-#{v2_offset}")
+          retval += check_bib("#{ANTHO_PATH}","#{letter}/#{prefix}","#{prefix}-#{v2_offset}")
           retval += ": <b>Entire Volume</b></li>\n"
         end
   
         # check for front matter
         if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{v}.pdf"))
           retval += "<li><a href=\"#{letter}/#{prefix}/#{v}.pdf\">#{v}</a>"
-          retval += check_bib("#{ANTHO_PATH}/#{letter}/#{prefix}","#{v}")
+          retval += check_bib("#{ANTHO_PATH}","#{letter}/#{prefix}","#{v}")
           retval += ": <i>Front Matter</i></p>\n"
         end 
 
@@ -141,7 +141,7 @@ FOOT
       retval += ".pdf\">#{prefix}-#{id}</a>"
 
       # check for bib
-      retval += check_bib("#{ANTHO_PATH}/#{letter}/#{prefix}","#{prefix}-#{id}")
+      retval += check_bib("#{ANTHO_PATH}","#{letter}/#{prefix}","#{prefix}-#{id}")
       retval += ": "
 
       # handle authors of individual papers
