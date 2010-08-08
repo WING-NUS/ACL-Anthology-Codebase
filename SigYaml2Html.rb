@@ -92,7 +92,7 @@ FOOT
   end
   
   def handle_antho_id(v,label)
-    name = "myname"
+    name = ""
     retval = ""
     letter = v.split("")[0]
     short_year = v.split("")[1..2].to_s
@@ -106,7 +106,14 @@ FOOT
     saw_header = false
     doc.elements.each("*/paper") { |p| 
       p_offset = p.attributes["id"].split("")[0..1].to_s 
-      if (p_offset != venue_offset) then next end
+
+      # skip non-relevant files
+      if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{v.split("")[4].to_s}.pdf"))
+        if (p.attributes["id"].split("")[0].to_s != v.split("")[4].to_s) then next end
+      else
+        if (p_offset != venue_offset) then next end
+      end
+
       if !saw_header # handle the header
         name = p.elements["title"].text 
         retval += "  <li> <a name=\"#{label}\"></a><h2>#{name}</h2><p> "
