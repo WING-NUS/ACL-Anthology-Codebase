@@ -161,8 +161,8 @@ end
 
 # set up options
 OptionParser.new do |opts|
-  opts.banner = "usage: #{@@PROG_NAME} [options] file_name"
-
+  opts.banner = "usage: #{@@PROG_NAME} [options] file_name\n" +
+                " e.g., #{@@PROG_NAME} current.html > Jyy-x.xml\n"
   opts.separator ""
   opts.on_tail("-d", "--download", "Download PDF plus and store as files") do @@DOWNLOAD = 1; end
   opts.on_tail("-h", "--help", "Show this message") do STDERR.puts opts; exit end
