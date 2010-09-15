@@ -113,10 +113,10 @@ while (<$fh>) {
   elsif (/^\s+$/) { next; }			    # skip blank lines
   else {
     if (/\<\?xml/) { ;
-    } elsif (/<volume id=\"(.+)\">/) {		# record volume number
+    } elsif (/<volume id=[\'\"](.+)[\'\"]>/) {		# record volume number
       $volume = $1;
       printHeader($volume,"../../index.html","../../favicon.ico", "../../images/acl-logo.gif");
-    } elsif (/<paper id=\"(\d+)\"( href=\"([^"]+)\")?>/) {
+    } elsif (/<paper id=[\'\"](\d+)[\'\"]( href=[\'\"]([^\"\']+)[\"\'])?>/) {
       $paperID = $1;
       $href = $3;
       @authors = ();
