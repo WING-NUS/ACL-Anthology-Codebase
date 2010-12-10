@@ -65,7 +65,11 @@ def process_paper(p, prefix, path, stem)
         # no author
       end
     end
-
+    
+    if (author == nil) 
+      STDERR.puts "No author correctly found for paper ##{pid}, dying!"
+      exit(-1)
+    end
     authors.push(canonicalize(author))
   }
   authorString = authors.join(", ") + ":"
