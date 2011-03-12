@@ -47,6 +47,7 @@ class ProcessCL
         @title = canon_string(div.text)
       elsif div.attributes["class"] == "arttitle"
         counter = counter +1
+        print "#{div.text}"
         art_title = canon_string(div.text)
         @articles[counter] = art_title
         @authors_last[counter] = Array.new
@@ -75,9 +76,9 @@ class ProcessCL
   end
   
   def canon_string (s)
-    md = /^\s*(.+\S)\s*$/.match(s)
+    md = /^\s*(.+\S)\s*$/m.match(s)
+    if (md.nil?) then return "" end
     s = md[1]
-#    s.gsub!(/[\n\r]/m, " ")
     return s
   end
 
