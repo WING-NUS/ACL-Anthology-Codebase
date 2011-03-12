@@ -153,6 +153,9 @@ while (<$fh>) {
     } elsif (/<\/volume>/) { ;	# skip line
     } elsif (/<year>(.+)<\/year>/i) { ; # ignore years for now
     } elsif (/<doi>(.+)<\/doi>/i) { ; # ignore DOIs for now
+    } elsif (/<organization>(.+)<\/organization>/i) { ; # ignore DOIs for now
+    } elsif (/<issn>(.+)<\/issn>/i) { ; # ignore DOIs for now
+    } elsif (/<urlalta>(.+)<\/urlalta>/i) { ; # ignore DOIs for now
     } else {
       die "Unknown category of line! \"$_\"";
     }

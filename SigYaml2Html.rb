@@ -95,17 +95,18 @@ FOOT
     name = ""
     retval = ""
     letter = v.split("")[0]
-    short_year = v.split("")[1..2].to_s
+    short_year = (v.split("")[1..2]).join("")
     prefix = letter.to_s + short_year
     path = "#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}.xml"
-    venue_offset = v.split("")[4..5].to_s
+    venue_offset = v.split("")[4..5].join("")
 
     # parse file
     file = File.new(path)
+    STDERR.puts path
     doc = REXML::Document.new file
     saw_header = false
     doc.elements.each("*/paper") { |p| 
-      p_offset = p.attributes["id"].split("")[0..1].to_s 
+      p_offset = p.attributes["id"].split("")[0..1].join("")
 
       # skip non-relevant files
       if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{v.split("")[4].to_s}.pdf"))
