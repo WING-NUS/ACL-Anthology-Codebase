@@ -2,7 +2,7 @@
 # -*- cperl -*-
 =head1 NAME
 
-html2xmlEntities.pl
+anthoBibs2xml.pl
 
 =head1 SYNOPSYS
 
@@ -30,48 +30,57 @@ if ($tmpfile =~ /^([-\@\w.]+)$/) { $tmpfile = $1; }		      # untaint tmpfile var
 $tmpfile = "/tmp/" . $tmpfile;
 $0 =~ /([^\/]+)$/; my $progname = $1;
 my $outputVersion = "1.0";
+
 my %entities = (
+		"--" => "&#8211;",
+		"\\\\#" => "#",
 		"&rsquo;" => "'",
 
-		"&agrave;" => "&#224;",
-		"&aacute;" => "&#225;",
-		"&Agrave;" => "&#192;",
+		"\\\\\`{a}" => "&#224;",
+		"\\\\\'{a}" => "&#225;",
+		"\\\\\'{A}" => "&#192;",
 		"á" => "&#225;",
 		"&acirc;" => "&#226;",
-		"&atilde;" => "&#227;",
-		"&auml;" => "&#228;",
+		"\\\\\~{a}" => "&#227;",
+		"\\\\\"{a}" => "&#228;",
 		"&aring;" => "&#229;",
 		"&aelig;" => "&#230;",
-		"&ccedil;" => "&#231;",
-		"&egrave;" => "&#232;",
+		"\\\\c{c}" => "&#231;",
+		"\\\\\'{e}" => "&#232;",
+		"\\\\\`{e}" => "&#232;",
 		"&eacute;" => "&#233;",
 		"é" => "&#233;",
-		"é" => "&#233;",
 		"&ecirc;" => "&#234;",
-		"&euml;" => "&#235;",
+		"\\\\\"{e}" => "&#235;",
+		"\\\\\'{i}" => "&#236;",
+		"\\\\\'{\\\\i}" => "&#236;",
 		"&igrave;" => "&#236;",
 		"&iacute;" => "&#237;",
 		"í" => "&#237;",
-		"&icirc;" => "&#238;",
-		"&iuml;" => "&#239;",
+		"\\\\\\\^{\\\\i}" => "&#238;",
+		"\\\\\\\^{i}" => "&#238;",
+		"\\\\\"{\\\\i}" => "&#239;",
+		"\\\\\"{i}" => "&#239;",
+		"\\\\\.{I}" => "I",
 		"&eth;" => "&#240;",
 		"&ntilde;" => "&#241;",
 		"&nacute;" => "&#x144;",
 		"&Nacute;" => "&#x143;",
 		"ñ" => "&#241;",
+		"\\\\\~{n}" => "&#241;",
 		"&ograve;" => "&#242;",
-		"&Oacute;" => "&#x00d3;",
-		"&oacute;" => "&#243;",
+		"\\\\\'{O}" => "&#x00d3;",
+		"\\\\\'{o}" => "&#243;",
 		"ó" => "&#243;",
 		"&ocirc;" => "&#244;",
 		"&otilde;" => "&#245;",
-		"&ouml;" => "&#246;",
+		"\\\\\"{o}" => "&#246;",
 		"&divide;" => "&#247;",
-		"&oslash;" => "&#248;",
+		"{\\\\o}" => "&#248;",
 		"&ugrave;" => "&#249;",
-		"&uacute;" => "&#250;",
+		"\\\\\'{u};" => "&#250;",
 		"&ucirc;" => "&#251;",
-		"&uuml;" => "&#252;",
+		"\\\\\"{u}" => "&#252;",
 		"ü" => "&#252;",
 		"&yacute;" => "&#253;",
 		"&thorn;" => "&#254;",
@@ -91,7 +100,7 @@ my %entities = (
 		"&Amacr;" =>  "&#x100;",
 		"&aogon;" =>  "&#x105;",
 		"&Aogon;" =>  "&#x104;",
-		"&cacute;" => "&#x107;",
+		"\\\\\'{c}" => "&#x107;",
 		"&Cacute;" => "&#x106;",
 		"&ccaron;" => "&#x10D;",
 		"&Ccaron;" => "&#x10C;",
@@ -175,10 +184,12 @@ my %entities = (
 		"&Rcedil;" => "&#x156;",
 		"&scirc;" =>  "&#x15C;",
 		"&Scirc;" =>  "&#x15D;",
+		"\\\\c{s}" => "s",
+		"\\\\c{S}" => "S",
 		"&tcaron;" => "&#x165;",
 		"&Tcaron;" => "&#x164;",
-		"&scaron;" => "&#x161;",
-		"&Scaron;" => "&#x160;",
+		"\\\\v{s}" => "&#x161;",
+		"\\\\v{S}" => "&#x160;",
 		"&tcedil;" => "&#x162;",
 		"&Tcedil;" => "&#x163;",
 		"&zcaron;" => "&#x1FD;",
@@ -227,7 +238,6 @@ my %entities = (
 		"&divide;" => "&#247;",
 		"&Agrave;" => "&#192;",
 		"&Aacute;" => "&#193;",
-		"Á" => "&#193;",
 		"&Acirc;" => "&#194;",
 		"&Atilde;" => "&#195;",
 		"&Auml;" => "&#196;",
@@ -256,6 +266,7 @@ my %entities = (
 		"&Uuml;" => "&#220;",
 		"&Yacute;" => "&#221;",
 		"&THORN;" => "&#222;",
+		"{\\\\ss}" => "&#223;",
 		"&szlig;" => "&#223;",
 		"&agrave;" => "&#224;",
 		"&aacute;" => "&#225;",
@@ -282,13 +293,15 @@ my %entities = (
 		"&ouml;" => "&#246;",
 		"&oslash;" => "&#248;",
 		"&ugrave;" => "&#249;",
-		"&uacute;" => "&#250;",
+		"\\\\'{u}" => "&#250;",
 		"&ucirc;" => "&#251;",
 		"&uuml;" => "&#252;",
 		"&yacute;" => "&#253;",
 		"&thorn;" => "&#254;",
 		"&yuml;" => "&#255;",
-	       );
+		);
+my $defaultSupDir = "~/public_html/supplementals/";
+
 ### END user customizable section
 
 ### Ctrl-C handler
@@ -301,9 +314,11 @@ sub quitHandler {
 sub Help {
   print STDERR "usage: $progname -h\t\t\t\t[invokes help]\n";
   print STDERR "       $progname -v\t\t\t\t[invokes version]\n";
-  print STDERR "       $progname [-q] filename(s)...\n";
+  print STDERR "       $progname [-q] [-V <vol>] [-s <supDir>] filename(s)...\n";
   print STDERR "Options:\n";
   print STDERR "\t-q\tQuiet Mode (don't echo license)\n";
+  print STDERR "\t-s <supDir>\tExplicitly assign supplemental directory (default: $defaultSupDir)\n";
+  print STDERR "\t-V <volume>\tExplicitly assign volume as <volume>\n";
   print STDERR "\n";
   print STDERR "Will accept input on STDIN as a single file.\n";
   print STDERR "\n";
@@ -332,12 +347,18 @@ if ($#ARGV == -1) { 		        # invoked with no arguments, possible error in exe
 }
 
 $SIG{'INT'} = 'quitHandler';
-getopts ('hqv');
+getopts ('hqs:vV:');
 
-our ($opt_q, $opt_v, $opt_h);
+our ($opt_q, $opt_s, $opt_v, $opt_h, $opt_V);
 # use (!defined $opt_X) for options with arguments
 if (!$opt_q) { License(); }		# call License, if asked for
 if ($opt_v) { Version(); exit(0); }	# call Version, if asked for
+my $volume = (!defined $opt_V) ? "XX" : $opt_V;
+if ($volume eq "XX") {		# guess volume if not given
+  $ARGV[0] =~ /([A-Z]\d\d)[\-\.]/;
+  $volume = $1;
+}
+my $supDir = (!defined $opt_s) ? $defaultSupDir : $opt_s;
 if ($opt_h) { Help(); exit (0); }	# call help, if asked for
 
 ## standardize input stream (either STDIN on first arg on command line)
@@ -353,12 +374,49 @@ if ($filename = shift) {
   $fh = "STDIN";
 }
 
+print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
+print "<volume id=\"$volume\">\n";
+
+my %h = ();
 while (<$fh>) {
-  foreach my $entity (keys %entities) {
-    s/$entity/$entities{$entity}/g;
+  if (/^\#/) { next; }			# skip comments
+  elsif (/^\s+$/) { next; }		# skip blank lines
+  else {
+    if (/\@([A-Za-z]+)\{(.+),/) { # new entry 
+      %h = ();
+      $h{"bibtype"} = lc(treatLatex($1));
+      $h{"bibkey"} = treatLatex($2);
+    } elsif (/^\}/) { # end of entry
+      my $id = getID(\%h);
+      my $software = checkSoftware($volume,$id);
+      if ($software ne "") { $h{"software"} = $software; } 
+      my $datasets = checkDatasets($volume,$id);
+      if ($datasets ne "") { $h{"dataset"} = $datasets; } 
+      process(\%h,2,$volume,$id);
+    } elsif (/\btitle\s+=\s+\{(.+)\}/) {
+      $h{"title"} = treatLatex($1);
+    } elsif (/\beditor\s+=\s+\{(.+)\}/) {
+      $h{"editor"} = treatLatex($1);
+    } elsif (/\bauthor\s+=\s+\{(.+)\}/) {
+      $h{"author"} = treatLatex($1);
+    } elsif (/\bbooktitle\s+=\s+\{(.+)\}/) {
+      $h{"booktitle"} = treatLatex($1);
+    } elsif (/\bmonth\s+=\s+\{(.+)\}/) {
+      $h{"month"} = treatLatex($1);
+    } elsif (/\byear\s+=\s+\{(.+)\}/) {
+      $h{"year"} = treatLatex($1);
+    } elsif (/\baddress\s+=\s+\{(.+)\}/) {
+      $h{"address"} = treatLatex($1);
+    } elsif (/\bpublisher\s+=\s+\{(.+)\}/) {
+      $h{"publisher"} = treatLatex($1);
+    } elsif (/\bpages\s+=\s+\{(.+)\}/) {
+      $h{"pages"} = treatLatex($1);
+    } elsif (/\burl\s+=\s+\{(.+)\}/) {
+      $h{"url"} = treatLatex($1);
+    }
   }
-  print
 }
+print "</volume>\n\n";
 
 close ($fh);
 
@@ -369,3 +427,93 @@ if ($filename = shift) {
 ###
 ### END of main program
 ###
+
+sub getID {
+  my $hashRef = shift @_;
+  my %h = %{$hashRef};
+  my $id = 0;
+  if (!defined $h{"url"}) {
+    print STDERR "No URL defined!";
+  } else {
+    $h{"url"} =~ /\-(\d{1,4})$/;
+    $id = $1;
+    if ($id < 100) {		# deal with volumes 
+      my @elts = split (//,$id);
+      if ($elts[0] eq "0") { $id .= "00"; }
+      else { $id *= 1000; }
+    }
+  }
+  return $id;
+}
+
+sub process {
+  my $hashRef = shift @_;
+  my $indent = shift @_;
+  my $volume = shift @_;
+  my $id = shift @_;
+  my %h = %{$hashRef};
+  my $s = "";
+
+  foreach my $k ("title", "author", "editor", "booktitle", "month",
+		 "year", "address", "publisher", "pages", "url",
+		 "software", "dataset", "bibtype", "bibkey") {
+
+    if (defined $h{$k}) {
+      if ($k eq "editor" || $k eq "author") { 
+	my @elts = split(/  and  /,$h{$k}); # split to individual author
+	for (my $i = 0; $i <= $#elts; $i++) {
+	  $s .= "  " . " " x $indent;
+	  $s .= "<" . $k . ">";
+	  # handle variants
+	  if ($elts[$i] =~ /(.+), (.+)/) {
+	    $s .= "<first>$2</first><last>$1</last>";
+	  } else {
+	    $s .= $elts[$i];
+	  }
+	  $s .= "</" . $k . ">\n";
+	}
+      } else {
+	$s .= "  " . " " x $indent;
+	$s .= "<" . $k . ">";
+	$s .= $h{$k};
+	$s .= "</" . $k . ">\n";
+      }
+    }
+  }
+  $s .= "  </paper>\n\n";
+  $s = "  <paper id=\"$id\">\n" . $s;
+  print $s;
+}
+
+sub treatLatex {
+  $_ = shift @_;
+  foreach my $entity (keys %entities) {
+    s/$entity/$entities{$entity}/g;
+  }
+  if ($_ =~ /\\/) { print STDERR "XXXX" . $_; }
+  $_;
+}
+
+sub checkSoftware {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $software = `ls $supDir/$prefix/$volume/$volume-$id.Software* 2>/dev/null`;
+  chomp $software;
+  $software =~ /\/([^\/]+)$/;
+  $software = $1;
+  if ($software ne "") { return $software; }
+}
+
+sub checkDatasets {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $datasets = `ls $supDir/$prefix/$volume/$volume-$id.Datasets* 2>/dev/null`;
+  chomp $datasets;
+  $datasets =~ /\/([^\/]+)$/;
+  $datasets = $1;
+  if ($datasets ne "") { return $datasets; }
+}
