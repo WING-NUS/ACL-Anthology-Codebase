@@ -31,6 +31,7 @@ $tmpfile = "/tmp/" . $tmpfile;
 $0 =~ /([^\/]+)$/; my $progname = $1;
 my $outputVersion = "1.0";
 my $defaultMode = "conference";
+my $defaultSupDir = "~/public_html/supplementals/";
 ### END user customizable section
 
 ### Ctrl-C handler
@@ -43,10 +44,11 @@ sub quitHandler {
 sub Help {
   print STDERR "usage: $progname -h\t\t\t\t[invokes help]\n";
   print STDERR "       $progname -v\t\t\t\t[invokes version]\n";
-  print STDERR "       $progname [-q] [-m <mode>] filename(s)...\n";
+  print STDERR "       $progname [-q] [-m <mode>] [-s <dir>] filename(s)...\n";
   print STDERR "Options:\n";
   print STDERR "\t-q\tQuiet Mode (don't echo license)\n";
   print STDERR "\t-m <mode>\tMode: conference, workshop, default: $defaultMode\n";
+  print STDERR "\t-s <supDir>\tExplicitly assign supplemental directory (default: $defaultSupDir)\n";
   print STDERR "\n";
   print STDERR "Will accept input on STDIN as a single file.\n";
   print STDERR "\n";
@@ -61,7 +63,7 @@ sub Version {
 }
 
 sub License {
-  print STDERR "# Copyright 2005 \251 by Min-Yen Kan\n";
+  print STDERR "# Copyright 2005-2011 \251 by Min-Yen Kan\n";
 }
 
 ###
@@ -75,13 +77,14 @@ if ($#ARGV == -1) { 		        # invoked with no arguments, possible error in exe
 }
 
 $SIG{'INT'} = 'quitHandler';
-getopts ('hm:qv');
+getopts ('hm:qs:v');
 
-our ($opt_q, $opt_m, $opt_v, $opt_h);
+our ($opt_q, $opt_m, $opt_s, $opt_v, $opt_h);
 # use (!defined $opt_X) for options with arguments
 if (!$opt_q) { License(); }		# call License, if asked for
 if ($opt_v) { Version(); exit(0); }	# call Version, if asked for
 if ($opt_h) { Help(); exit (0); }	# call help, if asked for
+my $supDir = (!defined $opt_s) ? $defaultSupDir : $opt_s;
 my $mode = (!defined $opt_m) ? $defaultMode : $opt_m;
 
 ## standardize input stream (either STDIN on first arg on command line)
@@ -156,6 +159,10 @@ while (<$fh>) {
     } elsif (/<organization>(.+)<\/organization>/i) { ; # ignore DOIs for now
     } elsif (/<issn>(.+)<\/issn>/i) { ; # ignore DOIs for now
     } elsif (/<urlalta>(.+)<\/urlalta>/i) { ; # ignore DOIs for now
+
+    ## Min: added these last two on Mon Jun 13 20:47:31 SGT 2011
+    } elsif (/<dataset>(.+)<\/dataset>/i) { ; # get dataset information through -e
+    } elsif (/<software>(.+)<\/software>/i) { ; # get software information through -e
     } else {
       die "Unknown category of line! \"$_\"";
     }
@@ -249,11 +256,18 @@ TRAILER
 sub printPaper {
   my ($volume, $title, $paperID, $href, @authors) = @_;
   my $authorString = join ("; ", @authors);
-  my $bibString = (-e "$basename$volume-$paperID.bib") ? " [<a href=$volume-$paperID.bib>bib</a>]" : "";
+  my $bibString = (-e "$basename$volume-$paperID.bib") ? " [<a href=\"$volume-$paperID.bib\">bib</a>]" : "";
+  my $softwareString = checkSoftware($volume,$paperID);
+  if ($softwareString ne "") { $softwareString = " [<a href=\"$softwareString\">software</a>]"; } 
+  my $datasetsString = checkDatasets($volume,$paperID);
+  if ($datasetsString ne "") { $datasetsString = " [<a href=\"$datasetsString\">dataset</a>]"; } 
   if ($href ne "") {
-    return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\" src=\"../../images/external.gif\" border=\"0\" />$bibString: <b>$authorString</b><br><i>$title</i>\n");
+    return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\"" . 
+	    " src=\"../../images/external.gif\" border=\"0\" />" .
+	    $bibString . $datasetsString . $softwareString . ": <b>$authorString</b><br><i>$title</i>\n");
   } else {
-    return ("<p><a href=$volume-$paperID.pdf>$volume-$paperID</a>$bibString: <b>$authorString</b><br><i>$title</i>\n");
+    return ("<p><a href=\"$volume-$paperID.pdf\">$volume-$paperID</a>" . $bibString . $datasetsString . $softwareString . 
+	    ": <b>$authorString</b><br><i>$title</i>\n");
   }
 }
 
@@ -272,9 +286,9 @@ sub printVolume {
   }
 #  print STDERR "$basename$volumeName.pdf";
   if (-e "$basename$volumeName.pdf") {
-    $buf .= "<p><a href=$volumeName.pdf>$volumeName</a>";
+    $buf .= "<p><a href=\"$volumeName.pdf\">$volumeName</a>";
     if (-e "$basename$volumeName.bib") {
-      $buf .= " [<a href=$volumeName.bib>bib</a>]";
+      $buf .= " [<a href=\"$volumeName.bib\">bib</a>]";
     }
     $buf .=": <b>Entire volume</b>";
   }
@@ -295,4 +309,28 @@ sub printToC {
   }
   $tocBuf .= "</table></div>\n";
   return ($tocBuf);
+}
+
+sub checkSoftware {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $software = `ls $supDir/$prefix/$volume/$volume-$id.Software* 2>/dev/null`;
+  chomp $software;
+  $software =~ /\/([^\/]+)$/;
+  $software = $1;
+  if ($software ne "") { return $software; }
+}
+
+sub checkDatasets {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $datasets = `ls $supDir/$prefix/$volume/$volume-$id.Datasets* 2>/dev/null`;
+  chomp $datasets;
+  $datasets =~ /\/([^\/]+)$/;
+  $datasets = $1;
+  if ($datasets ne "") { return $datasets; }
 }

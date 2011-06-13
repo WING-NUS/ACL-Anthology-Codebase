@@ -301,7 +301,6 @@ my %entities = (
 		"&yuml;" => "&#255;",
 		);
 my $defaultSupDir = "~/public_html/supplementals/";
-
 ### END user customizable section
 
 ### Ctrl-C handler
