@@ -93,6 +93,7 @@ def process_paper(p, prefix, path, stem)
       if (md = l.match(/^\s*doi\s*=\s*\{(.+)\}\s*/)) then doi = md[1] end
       if (md = l.match(/^\s*pages\s*=\s*\{(.+)\}\s*/)) then pages = md[1] end
       page_range = pages.sub(/\-/,"")
+#      page_range = pages.sub(/&#8211;/,"")
       ee = doi if @@OPT_X
     }
     bf.close
@@ -106,12 +107,16 @@ end
 
 ############################################################
 # set up options
-@@options = OpenStruct.new
+# @@options = OpenStruct.new
+@@MODE = "conference"
 OptionParser.new do |opts|
   opts.banner = "usage: #{@@PROG_NAME} [options] antho_file.xml > dblp_file.html"
 
   opts.separator ""
   opts.on_tail("-d", "--debug", "Turn record matching debugging on") do @@DEBUG = true end
+  opts.on_tail("-m", "--mode [MODE]", "operation mode (either workshop or default: conference)") do |opt|
+    @@MODE = opt || nil
+  end
   opts.on_tail("-h", "--help", "Show this message") do puts opts; exit end
   opts.on_tail("-v", "--version", "Show version") do puts "#{@@PROG_NAME} " + @@VERSION.join('.'); exit end
   opts.on_tail("-x", "--extract_doi", "Electronic edition to DOI instead of ACL Anthology") do @@OPT_X = true end
@@ -129,17 +134,15 @@ else
   basename = ARGV[0]
   path = ""
 end
-
-stem = basename.split(/\./)[0..-2].join
-
-#Thang add: to deal with workshop xml (retrieve, say W97 from W97-01.xml)
-stem = stem.split(/\-/)[0..-2].join 
-
-volumePattern = "000";
-if(ARGV[0].match(/\/W\//))
+case @@MODE
+when "workshop"
+  stem = basename.split(/\./)[0..-2].join
+  stem = stem.split(/\-/)[0..-2].join 
   volumePattern = "00";
+when "conference"
+  stem = basename.split(/\./)[0..-2].join
+  volumePattern = "000";
 end
-#end Thang add
 
 prefix = "http://www.aclweb.org/anthology/#{stem}-"
 

@@ -32,6 +32,7 @@ $0 =~ /([^\/]+)$/; my $progname = $1;
 my $outputVersion = "1.0";
 my $defaultMode = "conference";
 my $defaultSupDir = "~/public_html/supplementals/";
+my $publishedSupDir = "/supplementals";
 ### END user customizable section
 
 ### Ctrl-C handler
@@ -255,12 +256,13 @@ TRAILER
 
 sub printPaper {
   my ($volume, $title, $paperID, $href, @authors) = @_;
+  my ($prefixLetter,undef) = split(//,$volume);
   my $authorString = join ("; ", @authors);
   my $bibString = (-e "$basename$volume-$paperID.bib") ? " [<a href=\"$volume-$paperID.bib\">bib</a>]" : "";
   my $softwareString = checkSoftware($volume,$paperID);
-  if ($softwareString ne "") { $softwareString = " [<a href=\"$softwareString\">software</a>]"; } 
+  if ($softwareString ne "") { $softwareString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$softwareString\">software</a>]"; } 
   my $datasetsString = checkDatasets($volume,$paperID);
-  if ($datasetsString ne "") { $datasetsString = " [<a href=\"$datasetsString\">dataset</a>]"; } 
+  if ($datasetsString ne "") { $datasetsString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$datasetsString\">dataset</a>]"; } 
   if ($href ne "") {
     return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\"" . 
 	    " src=\"../../images/external.gif\" border=\"0\" />" .
