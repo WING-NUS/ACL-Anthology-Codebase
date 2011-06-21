@@ -56,16 +56,21 @@ class AnthoXML2AcmCSV
     in_doc.elements.each("*/paper/") { |e| 
       count += 1 
       if count == 1 then next end
+      print "count: #{count} #{e}\n"
       row_elements = Array.new
 
       # handle pages
       row_elements << handle_pages(e)
 
-      # handle first author last name
+      # handle first author last name with tags
       if e.elements["author/last"]
         author_last = e.elements["author/last"].text
+      elsif e.elements["author"] # handle just names without markup.  Assume last word is last name
+	full_name = e.elements["author"].text
+	name_elts = full_name.split
+        author_last = name_elts[-1]
       else
-      row_elements << "" # no authors
+        row_elements << "" # no authors
       end
       row_elements << author_last
 
@@ -79,6 +84,7 @@ class AnthoXML2AcmCSV
   def handle_pages(e)
     retval = ""
     pages = e.elements["pages"]
+    print "pages #{pages}\n"
     if pages
       if !match = /((\d+)\D+\d+)/.match(pages.text)
         retval += pages.text 
