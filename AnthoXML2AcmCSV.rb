@@ -56,7 +56,7 @@ class AnthoXML2AcmCSV
     in_doc.elements.each("*/paper/") { |e| 
       count += 1 
       if count == 1 then next end
-      print "count: #{count} #{e}\n"
+#      print "count: #{count} #{e}\n"
       row_elements = Array.new
 
       # handle pages
@@ -84,7 +84,7 @@ class AnthoXML2AcmCSV
   def handle_pages(e)
     retval = ""
     pages = e.elements["pages"]
-    print "pages #{pages}\n"
+#    print "pages #{pages}\n"
     if pages
       if !match = /((\d+)\D+\d+)/.match(pages.text)
         retval += pages.text 
