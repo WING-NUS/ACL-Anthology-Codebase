@@ -13,3 +13,4 @@ ProcessCL.rb - To capture metadata and PDFPlus files from the current issue page
 README.txt - This file
 SigYaml2Html.rb - To create Anthology pages for Special Interests Groups
 (SIGs) from the YAML metadata.
+anthoTitleAuthorsPairs2Bibs.rb - To create bib files from a text file of title and authors strings. See file for how-to use.

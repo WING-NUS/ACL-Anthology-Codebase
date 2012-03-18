@@ -112,9 +112,11 @@ my $paperID = "";
 my $buf = "";
 my $href = "";
 my %toc = ();
+# Examine each line of the input XML file to process.  
+# Note XML file is not really standard XML because of the need to have carriage returns
 while (<$fh>) {
-  if (/^\#/) { next; }				       # skip comments
-  elsif (/^\s+$/) { next; }			    # skip blank lines
+  if (/^\#/) { next; }		# skip comments
+  elsif (/^\s+$/) { next; }	# skip blank lines
   else {
     if (/\<\?xml/) { ;
     } elsif (/<volume id=[\'\"](.+)[\'\"]>/) {		# record volume number
@@ -162,8 +164,10 @@ while (<$fh>) {
     } elsif (/<urlalta>(.+)<\/urlalta>/i) { ; # ignore DOIs for now
 
     ## Min: added these last two on Mon Jun 13 20:47:31 SGT 2011
-    } elsif (/<dataset>(.+)<\/dataset>/i) { ; # get dataset information through -e
-    } elsif (/<software>(.+)<\/software>/i) { ; # get software information through -e
+    } elsif (/<dataset>(.+)<\/dataset>/i) { ; # get dataset information through -s
+    } elsif (/<software>(.+)<\/software>/i) { ; # get software information through -s
+    ## Min: added this line on Fri Jul 22 00:42:45 SGT 2011
+    } elsif (/<attachment>(.+)<\/attachment>/i) { ; # get software information through -s
     } else {
       die "Unknown category of line! \"$_\"";
     }
@@ -186,6 +190,7 @@ if ($filename = shift) {
 ### END of main program
 ###
 
+# Prints the header for the HTML file
 sub printHeader {
   my ($volume,$anthologyUrl,$faviconUrl,$aclLogo) = @_;
   print <<HEADER;
@@ -221,6 +226,7 @@ HEADER2
 #  if ($mode eq "conference") { print "<h1>$volume</h1>\n"; }
 }
 
+# Prints the division hiding javascript
 sub printDivFunction {
   # from http://www.netlobo.com/div_hiding.html on Thu Dec 20 00:30:50 SGT 2007
   print <<FUNCTION;
@@ -242,6 +248,7 @@ function toggleLayer( whichLayer ) {
 FUNCTION
 }
 
+# Prints the trailer for an individual paper
 sub printTrailer {
   my $anthologyUrl = shift;
 print <<TRAILER;
@@ -254,25 +261,60 @@ print <<TRAILER;
 TRAILER
 }
 
+# Prints an individual paper entry, as a string, returns it to the caller.
 sub printPaper {
   my ($volume, $title, $paperID, $href, @authors) = @_;
   my ($prefixLetter,undef) = split(//,$volume);
   my $authorString = join ("; ", @authors);
   my $bibString = (-e "$basename$volume-$paperID.bib") ? " [<a href=\"$volume-$paperID.bib\">bib</a>]" : "";
+
+  # process errata 
+  my $errataString = "";
+  my $i = 1;			# start errata count at 1
+  while (-e "$basename$volume-$paperID" . "e" . $i . ".pdf") {
+    $errataString .= " <A HREF=\"" . "$basename$volume-$paperID" . "e" . $i . ".pdf\">e$i</A> ";
+    $i++;
+  }
+  if ($errataString ne "") {
+    chop $errataString; 
+    $errataString = " [errata: $errataString]"; 
+  }
+  
+  # process revised versions, if any
+  my $revisedVersionString = "";
+  $i = 2;			# start revision count at 2
+  while (-e "$basename$volume-$paperID" . "v" . $i . ".pdf") {
+    $revisedVersionString .= " <A HREF=\"" . "$basename$volume-$paperID" . "v" . $i . ".pdf\">v$i</A> ";
+    $i++;
+  }
+  if ($revisedVersionString ne "") { 
+    chop $revisedVersionString; 
+    $revisedVersionString = " [revisions: $revisedVersionString]"; 
+  }
+
   my $softwareString = checkSoftware($volume,$paperID);
   if ($softwareString ne "") { $softwareString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$softwareString\">software</a>]"; } 
   my $datasetsString = checkDatasets($volume,$paperID);
   if ($datasetsString ne "") { $datasetsString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$datasetsString\">dataset</a>]"; } 
+  my $attachmentsString = checkAttachments($volume,$paperID);
+  if ($attachmentsString ne "") { $attachmentsString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$attachmentsString\">attachment</a>]"; } 
   if ($href ne "") {
     return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\"" . 
 	    " src=\"../../images/external.gif\" border=\"0\" />" .
-	    $bibString . $datasetsString . $softwareString . ": <b>$authorString</b><br><i>$title</i>\n");
+	    $revisedVersionString . $errataString .
+	    $bibString . $attachmentsString . $datasetsString . $softwareString . 
+	    ": <b>$authorString</b><br><i>$title</i>" .
+	    "\n");
   } else {
-    return ("<p><a href=\"$volume-$paperID.pdf\">$volume-$paperID</a>" . $bibString . $datasetsString . $softwareString . 
-	    ": <b>$authorString</b><br><i>$title</i>\n");
+    return ("<p><a href=\"$volume-$paperID.pdf\">$volume-$paperID</a>" . 
+	    $revisedVersionString . $errataString .
+	    $bibString . $attachmentsString . $datasetsString . $softwareString . 
+	    ": <b>$authorString</b><br><i>$title</i>" .
+	    "\n");
   }
 }
 
+# prints a volume, will call print paper in caller function
 sub printVolume {
   my ($volume, $title, $paperID) = @_;
   my $buf = "<a name=\"$paperID\"></a><h1>$title</h1>\n";
@@ -301,6 +343,7 @@ sub printVolume {
   return ($buf);
 }
 
+# Print the collapsable table of contents at the beginning of the HTML, returns it to the caller
 sub printToC {
   my $toc = shift;
   my %toc = %{$toc};
@@ -313,6 +356,7 @@ sub printToC {
   return ($tocBuf);
 }
 
+# Check for the presence of software in the supplementals directory
 sub checkSoftware {
   my $volume = shift @_;
   my $id = shift @_;
@@ -325,6 +369,7 @@ sub checkSoftware {
   if ($software ne "") { return $software; }
 }
 
+# Check for the presence of datasets in the supplementals directory
 sub checkDatasets {
   my $volume = shift @_;
   my $id = shift @_;
@@ -335,4 +380,17 @@ sub checkDatasets {
   $datasets =~ /\/([^\/]+)$/;
   $datasets = $1;
   if ($datasets ne "") { return $datasets; }
+}
+
+# Check for the presence of attachments in the supplementals directory
+sub checkAttachments {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $attachments = `ls $supDir/$prefix/$volume/$volume-$id.Attachment* 2>/dev/null`;
+  chomp $attachments;
+  $attachments =~ /\/([^\/]+)$/;
+  $attachments = $1;
+  if ($attachments ne "") { return $attachments; }
 }

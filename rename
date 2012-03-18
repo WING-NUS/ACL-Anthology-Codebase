@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+require "getopts.pl";
+
+&Getopts("spPSva");
+
+if (($#ARGV == -1) || ($#ARGV > 1)){ # echo help
+    print STDERR "Usage:\t$0 [-spSPva] <from> [<to>]\n";
+    print STDERR "\n";
+    print STDERR "-lowercase\tsuffix or prefix \"from\" string\n";
+    print STDERR "-uppercase\tsuffix or prefix \"to\" string\n";
+    print STDERR "-v\t\tverbose mode\n";
+    print STDERR "-a\t\tappend mode\n";
+    print STDERR "\n";
+    exit 0;
+}
+
+$mode = ($opt_p) ? 0 : 1;
+$rmode = ($opt_P) ? 0 : 1;
+$to = (defined $ARGV[1]) ? $ARGV[1] : "";
+$from = $ARGV[0];
+
+if ($opt_v && $mode == 1) {
+    print STDERR "Switching files with suffix $from";
+} elsif ($opt_v && $mode == 0) {
+    print STDERR "Switching files with prefix $from";
+}
+
+if ($opt_v && $rmode == 1) {
+    print STDERR "to suffix $to...\n";
+} elsif ($opt_v && $rmode == 0) {
+    print STDERR "to prefix $to...\n";
+}
+
+
+open (DIR, "ls -1 |");
+
+$hit = 0;
+while (<DIR>) {
+    chop;
+    $old = $_;
+    $new = $_;
+    if ($mode == 0 && /^$from/) {               # prefix find
+        $hit++;
+        if ($rmode == 0 && $opt_a) {
+            system ("mv \"$old\" \"$to$old\"");
+        } elsif ($rmode == 0) {
+            $new =~ s/^$from/$to/;
+            system ("mv \"$old\" \"$new\"");
+        } else {
+            system ("mv \"$old\" \"$old$to\"");
+        }
+    } elsif ($mode == 1 && /$from$/) {
+        $hit++;
+        if ($rmode == 1 && $opt_a) {
+            system ("mv \"$old\" \"$old$to\"");
+        } elsif ($rmode == 1) {
+            $new =~ s/$from$/$to/;
+            system ("mv \"$old\" \"$new\"");
+        } else {
+            system ("mv \"$old\" \"$old$to\"");
+        }
+    }
+}
+
+print stderr "Total of $hit files processed\n";
+
+close (DIR);
