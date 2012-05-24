@@ -389,6 +389,7 @@ sub checkAttachments {
   my ($prefix, undef) = split (//,$volume);
 
   my $attachments = `ls $supDir/$prefix/$volume/$volume-$id.Attachment* 2>/dev/null`;
+#  print STDERR "ls $supDir/$prefix/$volume/$volume-$id.Attachment* 2>/dev/null";
   chomp $attachments;
   $attachments =~ /\/([^\/]+)$/;
   $attachments = $1;
