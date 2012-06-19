@@ -88,6 +88,7 @@ class AnthoXML2DBLP
       if !/[\?\.\!]$/.match(title) then li.text += ". " else li.text += " " end
       li.text += "\n"
 
+      # handle pages
       li.text += handle_pages(e)
     
       li << handle_ee(e, volume_id)
@@ -104,8 +105,13 @@ class AnthoXML2DBLP
       else 
         retval += pages.text
       end
-    else
-      retval += "0-"
+    else 
+      # check if bib file has pages
+      if true
+	# 
+      else 
+        retval += "0-"
+      end
     end 
     retval += "\n"
     return retval   
