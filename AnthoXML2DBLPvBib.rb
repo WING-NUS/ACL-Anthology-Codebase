@@ -47,6 +47,7 @@ def process_paper(p, prefix, path, stem)
   authors = ""
   page_range = "0-"
   pid = p.attributes["id"]
+  href = p.attributes["href"]
   ee = ""
 
   # authors
@@ -102,7 +103,11 @@ def process_paper(p, prefix, path, stem)
   end
 
   if (@@DEBUG) then puts "BIBFILE #{bib_file}" end
-  buf = "<li>#{authorString}\n#{title}\n#{page_range}\n<ee>#{ee}</ee>\n"
+  if (href != nil)
+    buf = "<li>#{authorString}\n#{title}\n#{page_range}\n<ee>#{href}</ee>\n"
+  else
+    buf = "<li>#{authorString}\n#{title}\n#{page_range}\n<ee>#{ee}</ee>\n"
+  end
 end
 
 ############################################################

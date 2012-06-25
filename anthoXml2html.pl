@@ -168,6 +168,8 @@ while (<$fh>) {
     } elsif (/<software>(.+)<\/software>/i) { ; # get software information through -s
     ## Min: added this line on Fri Jul 22 00:42:45 SGT 2011
     } elsif (/<attachment>(.+)<\/attachment>/i) { ; # get software information through -s
+    ## Min: added this line on Fri Jun 22 08:33:41 SGT 2012
+    } elsif (/<presentation>(.+)<\/presentation>/i) { ; # get presentation information through -s
     } else {
       die "Unknown category of line! \"$_\"";
     }
@@ -298,17 +300,19 @@ sub printPaper {
   if ($datasetsString ne "") { $datasetsString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$datasetsString\">dataset</a>]"; } 
   my $attachmentsString = checkAttachments($volume,$paperID);
   if ($attachmentsString ne "") { $attachmentsString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$attachmentsString\">attachment</a>]"; } 
+  my $presentationString = checkPresentations($volume,$paperID);
+  if ($presentationString ne "") { $presentationString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$presentationString\">presentation</a>]"; } 
   if ($href ne "") {
     return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\"" . 
 	    " src=\"../../images/external.gif\" border=\"0\" />" .
 	    $revisedVersionString . $errataString .
-	    $bibString . $attachmentsString . $datasetsString . $softwareString . 
+	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   } else {
     return ("<p><a href=\"$volume-$paperID.pdf\">$volume-$paperID</a>" . 
 	    $revisedVersionString . $errataString .
-	    $bibString . $attachmentsString . $datasetsString . $softwareString . 
+	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString  .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   }
@@ -394,4 +398,19 @@ sub checkAttachments {
   $attachments =~ /\/([^\/]+)$/;
   $attachments = $1;
   if ($attachments ne "") { return $attachments; }
+}
+
+# Check for the presence of attachments in the supplementals directory
+sub checkPresentations {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $presentations = `ls $supDir/$prefix/$volume/$volume-$id.Presentation* 2>/dev/null`;
+#  print STDERR "ls $supDir/$prefix/$volume/$volume-$id.Presentation* 2>/dev/null";
+  chomp $presentations;
+  $presentations =~ /\/([^\/]+)$/;
+  $presentations = $1;
+#  print STDERR "[ $presentations ]";
+  if ($presentations ne "") { return $presentations; }
 }

@@ -5,8 +5,8 @@ anthoBibs2bib.pl -
 AnthoXML2AcmCSV.rb - To convert Anthology XML to ACM CSV for reporting to ACM
 Portal
 anthoXml2acm.rb - old script, deprecated
-anthoXml2dblp.rb - old script, deprecated
-AnthoXML2DBLP.rb - To convert Anthology XML to DBLP reporting format
+AnthoXML2DBLPvBib.rb - To convert Anthology XML to DBLP reporting format (for use with older files without <first>, <last> tags.  Tries to find pages in bib)
+AnthoXML2DBLPvFL.rb - To convert Anthology XML to DBLP reporting format (for use with <first>, <last> tags; doesn't handle bib file for processing pages)
 anthoXml2html.pl - Create Anthology HTML from XML format
 html2xmlEntities.pl - Converts HTML entities to XML for Anthology XML format
 ProcessCL.rb - To capture metadata and PDFPlus files from the current issue page from the Computational Linguistics journal website.
