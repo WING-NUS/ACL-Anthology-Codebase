@@ -84,22 +84,31 @@ def process_paper(p, prefix, path, stem)
   # ee (points now to anthology, use -x to extract DOI from bib file)
   ee = prefix + pid
 
-  # page range (from bib file if present)
-  bib_file = "#{path}#{stem}-#{pid}.bib"
+  # page range (from <pages> in XML, else from bib file if present)
   doi = ""
-  pages = ""
-  begin
-    bf = File.open(bib_file) 
-    bf.each { |l|
-      if (md = l.match(/^\s*doi\s*=\s*\{(.+)\}\s*/)) then doi = md[1] end
-      if (md = l.match(/^\s*pages\s*=\s*\{(.+)\}\s*/)) then pages = md[1] end
-      page_range = pages.sub(/\-/,"")
-#      page_range = pages.sub(/&#8211;/,"")
-      ee = doi if @@OPT_X
-    }
-    bf.close
-  rescue
-    STDERR.puts "Warning no bib file for #{pid}."
+  pages = p.elements["pages"]
+  if (pages != nil)
+    page_range = pages.text
+  else 
+    bib_file = "#{path}#{stem}-#{pid}.bib"
+    pages = ""
+    begin
+      bf = File.open(bib_file) 
+      bf.each { |l|
+        if (md = l.match(/^\s*doi\s*=\s*\{(.+)\}\s*/)) then doi = md[1] end
+        if (md = l.match(/^\s*pages\s*=\s*\{(.+)\}\s*/)) then pages = md[1] end
+
+        if (pages = l.match(/\-/))
+          page_range = pages.sub(/\-/,"")
+        else
+          page_range = pages.sub(/&#8211;/,"")
+        end
+        ee = doi if @@OPT_X
+     }
+     bf.close
+    rescue
+      STDERR.puts "Warning no bib file for #{pid}."
+    end
   end
 
   if (@@DEBUG) then puts "BIBFILE #{bib_file}" end
