@@ -48,7 +48,7 @@ sub Help {
   print STDERR "       $progname [-q] [-m <mode>] [-s <dir>] filename(s)...\n";
   print STDERR "Options:\n";
   print STDERR "\t-q\tQuiet Mode (don't echo license)\n";
-  print STDERR "\t-m <mode>\tMode: conference, workshop, default: $defaultMode\n";
+  print STDERR "\t-m <mode>\tMode: conference, workshop, journal, default: $defaultMode\n";
   print STDERR "\t-s <supDir>\tExplicitly assign supplemental directory (default: $defaultSupDir)\n";
   print STDERR "\n";
   print STDERR "Will accept input on STDIN as a single file.\n";

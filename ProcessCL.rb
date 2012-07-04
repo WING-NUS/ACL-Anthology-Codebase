@@ -13,7 +13,9 @@ include REXML
 @@INTERVAL = 100
 @@PROG_NAME = File.basename($0)
 @@BASE_URL = "http://www.mitpressjournals.org"
+@@ACL_ANTHOLOGY_BASE = "http://www.aclweb.org/anthology/"
 @@DOWNLOAD = 0
+@@DEFAULT_VOLUME_INFO = "10-1"
 ############################################################
 # EXCEPTION HANDLING
 int_handler = proc {
@@ -47,7 +49,7 @@ class ProcessCL
         @title = canon_string(div.text)
       elsif div.attributes["class"] == "arttitle"
         counter = counter +1
-        print "#{div.text}"
+#        print "#{div.text}"
         art_title = canon_string(div.text)
         @articles[counter] = art_title
         @authors_last[counter] = Array.new
@@ -117,6 +119,9 @@ class ProcessCL
       pdfplus = @href[i]
       doi_href = @href[i].gsub(/\/doi\/pdfplus\//, "")
       doi.add_text doi_href 
+      url = paper.add_element 'url'
+      anthology_url = @@ACL_ANTHOLOGY_BASE + "#{vol}#{yr}-#{id}"
+      url.add_text anthology_url
 
       if (@@DOWNLOAD == 1) 
         fetch_paper(pdfplus,"#{vol}#{yr}-#{id.to_s}")
@@ -138,6 +143,8 @@ class ProcessCL
     buf.gsub!(/(<\/author>)/) { |m| "#{m}\n" }
     buf.gsub!(/(<doi>)/) { |m| "    #{m}" }
     buf.gsub!(/(<\/doi>)/) { |m| "#{m}\n" }
+    buf.gsub!(/(<url>)/) { |m| "    #{m}" }
+    buf.gsub!(/(<\/url>)/) { |m| "#{m}\n" }
     print buf
   end
   
@@ -161,13 +168,22 @@ end
 ############################################################
 
 # set up options
+v = @@DEFAULT_VOLUME_INFO
+volume = ""
+issue = ""
 OptionParser.new do |opts|
   opts.banner = "usage: #{@@PROG_NAME} [options] file_name\n" +
-                " e.g., #{@@PROG_NAME} current.html > Jyy-x.xml\n"
+                " e.g., #{@@PROG_NAME} -V yy-x current.html > Jyy-x.xml\n"
   opts.separator ""
   opts.on_tail("-d", "--download", "Download PDF plus and store as files") do @@DOWNLOAD = 1; end
   opts.on_tail("-h", "--help", "Show this message") do STDERR.puts opts; exit end
   opts.on_tail("-v", "--version", "Show version") do STDERR.puts "#{@@PROG_NAME} " + @@VERSION.join('.'); exit end
+  opts.on_tail("-V", "--volume [VOLUME_STRING]", "Use provided yy-x as the volume and issue number") do |vol|
+    v = vol
+    v_elts = v.split(/\-/)
+    volume = v_elts[0]
+    issue = v_elts[1]
+  end
 end.parse!
 
 pc = ProcessCL.new()
@@ -175,5 +191,5 @@ pc = ProcessCL.new()
 # process each file
 ARGV.each do |fn|
   $stderr.print "# #{@@PROG_NAME} info\t\tProcessing \"#{fn}\"\n"
-  pc.process_journal_issue(fn,"J","3","10")
+  pc.process_journal_issue(fn,"J",issue,volume)
 end
