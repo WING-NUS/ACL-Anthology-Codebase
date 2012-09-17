@@ -123,7 +123,9 @@ ARGV.each do |argv|
     # make csv file
     rootname = File.basename(argv.gsub(/.xml/,""))
     csv = File.new("/tmp/#{rootname}.csv","w")
-    csv.print ax2ac.process_file(argv)
+    buf = ax2ac.process_file(argv)
+    csv.print buf
+    print buf
     csv.close
 
     # compile list of files
