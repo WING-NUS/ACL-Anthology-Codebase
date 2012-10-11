@@ -156,6 +156,7 @@ while (<$fh>) {
     } elsif (/<title>(.+)<\/title>/i) {
       $title = $1;
     } elsif (/<url>(.+)<\/url>/i) { ; # ignore url for now
+    } elsif (/<revision/) { ;	# skip revisions, handled through file detection
     } elsif (/<\/volume>/) { ;	# skip line
     } elsif (/<year>(.+)<\/year>/i) { ; # ignore years for now
     } elsif (/<doi>(.+)<\/doi>/i) { ; # ignore DOIs for now
