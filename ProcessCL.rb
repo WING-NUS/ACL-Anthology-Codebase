@@ -16,6 +16,7 @@ include REXML
 @@ACL_ANTHOLOGY_BASE = "http://www.aclweb.org/anthology/"
 @@DOWNLOAD = 0
 @@DEFAULT_VOLUME_INFO = "10-1"
+@@FF_USER_AGENT = "\"Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1\""
 ############################################################
 # EXCEPTION HANDLING
 int_handler = proc {
@@ -125,6 +126,7 @@ class ProcessCL
 
       if (@@DOWNLOAD == 1) 
         fetch_paper(pdfplus,"#{vol}#{yr}-#{id.to_s}")
+        sleep 10
       end
 
       write_bib_file()
@@ -151,7 +153,9 @@ class ProcessCL
   def fetch_paper(href, id) 
     url = "#{@@BASE_URL}#{href}"
     print "fetching #{url} as #{id}"
-    system "wget #{url} -O #{id}.pdf"
+    buf = "wget --user-agent #{@@FF_USER_AGENT} #{url} -O #{id}.pdf"
+    print buf
+    system buf
   end
 
   def write_bib_file

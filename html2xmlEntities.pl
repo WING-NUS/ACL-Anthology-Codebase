@@ -182,7 +182,7 @@ my %entities = (
 		"&tcedil;" => "&#x162;",
 		"&Tcedil;" => "&#x163;",
 		"&zcaron;" => "&#x1FD;",
-		"&Zcaron;" => "&#x17E;",
+		"&Zcaron;" => "&#381;",
 		"&zdot;" =>   "&#x17C;",
 		"&Zdot;" =>   "&#x17B;",
 

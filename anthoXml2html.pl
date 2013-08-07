@@ -128,6 +128,12 @@ while (<$fh>) {
       @authors = ();
       $title = ();
 #      print STDERR "$paperID - [$href]\n";
+    } elsif (/<paper href=[\'\"]([^\"\']+)[\"\'] id=[\'\"](\d+)[\'\"]?>/) {
+      $paperID = $2;
+      $href = $1;
+      @authors = ();
+      $title = ();
+#      print STDERR "$paperID - [$href]\n";
     } elsif (/<address>(.+)<\/address>/i) { ; # ignore address for now
     } elsif (/<author>(.+)<\/author>/i) {
       my $authorString = $1;
@@ -159,10 +165,11 @@ while (<$fh>) {
     } elsif (/<revision/) { ;	# skip revisions, handled through file detection
     } elsif (/<\/volume>/) { ;	# skip line
     } elsif (/<year>(.+)<\/year>/i) { ; # ignore years for now
-    } elsif (/<doi>(.+)<\/doi>/i) { ; # ignore DOIs for now
-    } elsif (/<organization>(.+)<\/organization>/i) { ; # ignore DOIs for now
-    } elsif (/<issn>(.+)<\/issn>/i) { ; # ignore DOIs for now
-    } elsif (/<urlalta>(.+)<\/urlalta>/i) { ; # ignore DOIs for now
+    } elsif (/<doi>(.+)<\/doi>/i) { ; # ignore for now
+    } elsif (/<organization>(.+)<\/organization>/i) { ; # ignore for now
+    } elsif (/<issn>(.+)<\/issn>/i) { ; # ignore for now
+    } elsif (/<href>(.+)<\/href>/i) { ; # ignore for now
+    } elsif (/<urlalta>(.+)<\/urlalta>/i) { ; # ignore for now
 
     ## Min: added these last two on Mon Jun 13 20:47:31 SGT 2011
     } elsif (/<dataset>(.+)<\/dataset>/i) { ; # get dataset information through -s
