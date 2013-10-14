@@ -14,7 +14,7 @@ include REXML
 @@VERSION = [1,0]
 @@INTERVAL = 100
 @@PROG_NAME = File.basename($0)
-
+@@SUPPLEMENTALS_DIR = "supplementals"
 ############################################################
 # EXCEPTION HANDLING
 int_handler = proc {
@@ -147,11 +147,41 @@ FOOT
 
       # handle individual papers
       id = p.attributes["id"]
-      retval += "<li><a href=\"#{letter}/#{prefix}/#{prefix}-#{id}"
+      paper_filename_base = "#{letter}/#{prefix}/#{prefix}-#{id}"
+      retval += "<li><a href=\"#{paper_filename_base}"
       retval += ".pdf\">#{prefix}-#{id}</a>"
+
+      # handle sequential attachments (revisions, errata)
+      rev_ds = [["revision","v","revisions"],["erratum","e","errata"]]
+      rev_ds.each { |rev_type_ds|
+        rev_count = 0
+        rev_parts = ""
+	p.elements.each(rev_type_ds[0]) { |rev| 
+  	  rev_count += 1
+	  rev_filename = "#{paper_filename_base}#{rev_type_ds[1]}#{rev.attributes["id"]}"
+	  rev_parts += " <a href=\"#{rev_filename}.pdf\">#{rev_type_ds[1]}#{rev.attributes["id"]}</a>"
+        }
+        if rev_count != 0 
+	  retval +=  " [" + rev_type_ds[2] + ":" + rev_parts + "]"
+        end
+      }
 
       # check for bib
       retval += check_bib("#{ANTHO_PATH}","#{letter}/#{prefix}","#{prefix}-#{id}")
+
+      # check for supplementals ("attachment", "dataset", "software", "presentation")
+      ["attachment","dataset","software","presentation"].each { |supp_type|
+	supp_count = 0
+	supp_parts = ""
+	p.elements.each(supp_type) { |supp|
+	  supp_count += 1
+  	  supp_parts += "<a href=\"#{@@SUPPLEMENTALS_DIR}/#{letter}/#{prefix}/#{supp.text}\">#{supp_type}</a>"
+	}
+	if supp_count != 0
+	  retval += " [#{supp_parts}]"
+	end
+      }
+
       retval += ": "
 
       # handle authors of individual papers
@@ -176,6 +206,9 @@ FOOT
  
       # handle title of paper
       retval += "<i>#{p.elements["title"].text}</i></li>\n"
+
+      # handle supplementals
+
     }
     return retval, name
   end
