@@ -14,7 +14,7 @@ include REXML
 @@VERSION = [1,0]
 @@INTERVAL = 100
 @@PROG_NAME = File.basename($0)
-@@SUPPLEMENTALS_DIR = "supplementals"
+@@SUPPLEMENTALS_DIR = "../supplementals"
 ############################################################
 # EXCEPTION HANDLING
 int_handler = proc {
