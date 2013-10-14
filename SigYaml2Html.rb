@@ -92,6 +92,8 @@ FOOT
   end
   
   def handle_antho_id(v,label)
+    # Handles an embedded Anthology ID by reading the appropriate XML file
+    # skipping to the important <paper> elements
     name = ""
     retval = ""
     letter = v.split("")[0]
