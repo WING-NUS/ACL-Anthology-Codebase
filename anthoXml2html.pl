@@ -112,6 +112,7 @@ my $paperID = "";
 my $buf = "";
 my $href = "";
 my %toc = ();
+my $videoString = ();
 # Examine each line of the input XML file to process.  
 # Note XML file is not really standard XML because of the need to have carriage returns
 while (<$fh>) {
@@ -126,13 +127,14 @@ while (<$fh>) {
       $paperID = $1;
       $href = $3;
       @authors = ();
-      $title = ();
+      $videoString = "";
 #      print STDERR "$paperID - [$href]\n";
     } elsif (/<paper href=[\'\"]([^\"\']+)[\"\'] id=[\'\"](\d+)[\'\"]?>/) {
       $paperID = $2;
       $href = $1;
       @authors = ();
       $title = ();
+      $videoString = "";
 #      print STDERR "$paperID - [$href]\n";
     } elsif (/<address>(.+)<\/address>/i) { ; # ignore address for now
     } elsif (/<author>(.+)<\/author>/i) {
@@ -155,18 +157,30 @@ while (<$fh>) {
         $buf .= printVolume($volume,$title,$paperID);
 	$toc{"$paperID"} = $title;
       } else {
-        $buf .= printPaper($volume,$title,$paperID,$href,@authors);
+        $buf .= printPaper($volume,$title,$paperID,$href,$videoString,@authors);
       }
     } elsif (/<pages>(.*)<\/pages>/i) { ; # ignore bibkey for now
     } elsif (/<publisher>(.+)<\/publisher>/i) { ; # ignore publisher for now
     } elsif (/<title>(.+)<\/title>/i) {
       $title = $1;
     } elsif (/<url>(.+)<\/url>/i) { ; # ignore url for now
-    } elsif (/<revision/) { ;	# skip revisions, handled through file detection
+    } elsif (/<revision/i) { ;	# skip revisions, handled through file detection
     } elsif (/<\/volume>/) { ;	# skip line
     } elsif (/<year>(.+)<\/year>/i) { ; # ignore years for now
     } elsif (/<doi>(.+)<\/doi>/i) { ; # ignore for now
     } elsif (/<organization>(.+)<\/organization>/i) { ; # ignore for now
+    } elsif (/<video(.+)\/>/i) { 
+      my $videoData = $1;
+      $videoData =~ /href=\"([^\"]+)\"/;
+      my $href = $1;
+      $videoData =~ /tag=\"([^\"]+)\"/;
+      my $tag = $1;
+      if ($videoString ne "") { $videoString .= " "; }
+      $videoString .= "<A HREF=\"$href\">$tag</A>";
+      if ($href !~ /^http:\/\/www.aclweb.org\//) {
+	$videoString .= '<img width="10px" height="10px" src="../../images/external.gif" border="0"/>';
+      }
+      
     } elsif (/<issn>(.+)<\/issn>/i) { ; # ignore for now
     } elsif (/<href>(.+)<\/href>/i) { ; # ignore for now
     } elsif (/<urlalta>(.+)<\/urlalta>/i) { ; # ignore for now
@@ -273,7 +287,7 @@ TRAILER
 
 # Prints an individual paper entry, as a string, returns it to the caller.
 sub printPaper {
-  my ($volume, $title, $paperID, $href, @authors) = @_;
+  my ($volume, $title, $paperID, $href, $videoString, @authors) = @_;
   my ($prefixLetter,undef) = split(//,$volume);
   my $authorString = join ("; ", @authors);
   my $bibString = (-e "$basename$volume-$paperID.bib") ? " [<a href=\"$volume-$paperID.bib\">bib</a>]" : "";
@@ -301,6 +315,9 @@ sub printPaper {
     chop $revisedVersionString; 
     $revisedVersionString = " [revisions: $revisedVersionString]"; 
   }
+  if ($videoString ne "") {
+    $videoString = " [" . $videoString . "]";
+  }
 
   my $softwareString = checkSoftware($volume,$paperID);
   if ($softwareString ne "") { $softwareString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$softwareString\">software</a>]"; } 
@@ -314,13 +331,13 @@ sub printPaper {
     return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\"" . 
 	    " src=\"../../images/external.gif\" border=\"0\" />" .
 	    $revisedVersionString . $errataString .
-	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString .
+	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString . $videoString .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   } else {
     return ("<p><a href=\"$volume-$paperID.pdf\">$volume-$paperID</a>" . 
 	    $revisedVersionString . $errataString .
-	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString  .
+	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString  . $videoString .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   }

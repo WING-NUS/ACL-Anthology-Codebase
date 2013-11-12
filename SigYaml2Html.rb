@@ -182,6 +182,11 @@ FOOT
 	end
       }
 
+      # handle videos
+      p.elements.each("video") { |v|
+        retval += ' [<a href="' + v.attributes['href'] + '">' + v.attributes['tag'] + '</A><img width="10px" height="10px" src="../../images/external.gif" border="0">]'
+      }
+
       retval += ": "
 
       # handle authors of individual papers
