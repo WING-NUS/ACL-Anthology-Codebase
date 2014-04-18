@@ -149,6 +149,7 @@ while (<$fh>) {
     } elsif (/<bibtype>(.+)<\/bibtype>/i) { ; # ignore bibtype for now
     } elsif (/<booktitle>(.+)<\/booktitle>/i) { ; # ignore bibkey for now
     } elsif (/<editor>(.+)<\/editor>/i) { ; # ignore editors for now
+    } elsif (/<isbn>(.+)<\/isbn>/i) { ; # ignore editors for now
     } elsif (/<month>(.+)<\/month>/i) { ; # ignore months for now
     } elsif (/<\/paper>/) {				      # output
       if (($paperID % 1000 == 0 && $mode eq "conference") ||
