@@ -64,7 +64,7 @@ sub Version {
 }
 
 sub License {
-  print STDERR "# Copyright 2005-2011 \251 by Min-Yen Kan\n";
+  print STDERR "# Copyright 2005-2014 \251 by Min-Yen Kan\n";
 }
 
 ###
@@ -187,6 +187,7 @@ while (<$fh>) {
     } elsif (/<urlalta>(.+)<\/urlalta>/i) { ; # ignore for now
 
     ## Min: added these last two on Mon Jun 13 20:47:31 SGT 2011
+    } elsif (/<notes>(.+)<\/notes>/i) { ; # get notes information through -s
     } elsif (/<dataset>(.+)<\/dataset>/i) { ; # get dataset information through -s
     } elsif (/<software>(.+)<\/software>/i) { ; # get software information through -s
     ## Min: added this line on Fri Jul 22 00:42:45 SGT 2011
@@ -320,6 +321,8 @@ sub printPaper {
     $videoString = " [" . $videoString . "]";
   }
 
+  my $notesString = checkNotes($volume,$paperID);
+  if ($notesString ne "") { $notesString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$notesString\">notes</a>]"; } 
   my $softwareString = checkSoftware($volume,$paperID);
   if ($softwareString ne "") { $softwareString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$softwareString\">software</a>]"; } 
   my $datasetsString = checkDatasets($volume,$paperID);
@@ -332,13 +335,13 @@ sub printPaper {
     return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\"" . 
 	    " src=\"../../images/external.gif\" border=\"0\" />" .
 	    $revisedVersionString . $errataString .
-	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString . $videoString .
+	    $bibString . $attachmentsString . $notesString . $datasetsString . $softwareString . $presentationString . $videoString .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   } else {
     return ("<p><a href=\"$volume-$paperID.pdf\">$volume-$paperID</a>" . 
 	    $revisedVersionString . $errataString .
-	    $bibString . $attachmentsString . $datasetsString . $softwareString . $presentationString  . $videoString .
+	    $bibString . $attachmentsString . $notesString . $datasetsString . $softwareString . $presentationString  . $videoString .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   }
@@ -384,6 +387,19 @@ sub printToC {
   }
   $tocBuf .= "</table></div>\n";
   return ($tocBuf);
+}
+
+# Check for the presence of notes in the supplementals directory
+sub checkNotes {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $notes = `ls $supDir/$prefix/$volume/$volume-$id.Notes* 2>/dev/null`;
+  chomp $notes;
+  $notes =~ /\/([^\/]+)$/;
+  $notes = $1;
+  if ($notes ne "") { return $notes; }
 }
 
 # Check for the presence of software in the supplementals directory
