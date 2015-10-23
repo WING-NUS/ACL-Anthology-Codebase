@@ -31,8 +31,8 @@ $tmpfile = "/tmp/" . $tmpfile;
 $0 =~ /([^\/]+)$/; my $progname = $1;
 my $outputVersion = "1.0";
 my $defaultMode = "conference";
-my $defaultSupDir = "~/public_html/supplementals/";
-my $publishedSupDir = "/supplementals";
+my $defaultSupDir = "~/public_html/attachments/";
+my $publishedSupDir = "../../attachments";
 ### END user customizable section
 
 ### Ctrl-C handler
@@ -114,6 +114,7 @@ my $href = "";
 my %toc = ();
 my $videoString = "";
 my $mrfString = "";
+my $skip = false;
 # Examine each line of the input XML file to process.  
 # Note XML file is not really standard XML because of the need to have carriage returns
 while (<$fh>) {
@@ -140,6 +141,24 @@ while (<$fh>) {
       $mrfString = "";
 #      print STDERR "$paperID - [$href]\n";
     } elsif (/<address>(.+)<\/address>/i) { ; # ignore address for now
+    } elsif (/<author>$/i) {
+      my $authorString = "";
+      my $author = "";
+      while (<$fh>) {
+        if ($_ =~ /<\/author>/) { last; }
+	chop;
+        $authorString .= $_;
+      }
+      if ($authorString =~ m/<first>(.+)<\/first>\s*<last>(.+)<\/last>/i) {
+	$author = "$1 $2";
+      } elsif ($authorString =~ m/<first>(.+)<\/first>\s*<von>(.+)<\/von>\s*<last>(.+)<\/last>/i) {
+	$author = "$1 $2 $3";
+      }
+      $author =~ s/ +/ /g;
+      $author =~ s/^ +//g;
+      $author =~ s/ +$//g;
+#      print STDERR "[$authorString]($author)";
+      push (@authors, $authorString);
     } elsif (/<author>(.+)<\/author>/i) {
       my $authorString = $1;
       if ($authorString =~ m/<first>(.+)<\/first><last>(.+)<\/last>/i) {
@@ -152,6 +171,8 @@ while (<$fh>) {
     } elsif (/<bibtype>(.+)<\/bibtype>/i) { ; # ignore bibtype for now
     } elsif (/<booktitle>(.+)<\/booktitle>/i) { ; # ignore bibkey for now
     } elsif (/<editor>(.+)<\/editor>/i) { ; # ignore editors for now
+    } elsif (/<editor>$/i) { # ignore editors for now
+    } elsif (/<\/editor>$/i) { $skip = false; # ignore editors for now
     } elsif (/<isbn>(.+)<\/isbn>/i) { ; # ignore editors for now
     } elsif (/<month>(.+)<\/month>/i) { ; # ignore months for now
     } elsif (/<\/paper>/) {				      # output
@@ -167,8 +188,20 @@ while (<$fh>) {
     } elsif (/<publisher>(.+)<\/publisher>/i) { ; # ignore publisher for now
     } elsif (/<title>(.+)<\/title>/i) {
       $title = $1;
+    } elsif (/<title>$/) {
+      my $titleString = "";
+      while (<$fh>) {
+        if ($_ =~ /<\/title>/) { last; }
+	chop;
+        $titleString .= $_;
+      }
+      $titleString =~ s/ +/ /g;
+      $titleString =~ s/^ +//g;
+      $titleString =~ s/ +$//g;
+      $title = $titleString;
     } elsif (/<url>(.+)<\/url>/i) { ; # ignore url for now
     } elsif (/<revision/i) { ;	# skip revisions, handled through file detection
+    } elsif (/<erratum/i) { ;	# skip errata, handled through file detection
     } elsif (/<\/volume>/) { ;	# skip line
     } elsif (/<year>(.+)<\/year>/i) { ; # ignore years for now
     } elsif (/<doi>(.+)<\/doi>/i) { ; # ignore for now
@@ -209,6 +242,7 @@ while (<$fh>) {
     } elsif (/<attachment type=\"([^\"]+)\">(.+)<\/attachment>/i) { ; # get software information through -s
     ## Min: added this line on Fri Jun 22 08:33:41 SGT 2012
     } elsif (/<presentation>(.+)<\/presentation>/i) { ; # get presentation information through -s
+    } elsif ($skip == true) { ; # skip line
     } else {
       die "Unknown category of line! \"$_\"";
     }
@@ -346,19 +380,21 @@ sub printPaper {
   if ($attachmentsString ne "") { $attachmentsString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$attachmentsString\">attachment</a>]"; } 
   my $presentationString = checkPresentations($volume,$paperID);
   if ($presentationString ne "") { $presentationString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$presentationString\">presentation</a>]"; } 
+  my $posterString = checkPosters($volume,$paperID);
+  if ($posterString ne "") { $posterString = " [<a href=\"$publishedSupDir/$prefixLetter/$volume/$posterString\">poster</a>]"; } 
   if ($href ne "") {
     return ("<p><a href=\"$href\">$volume-$paperID</a>&nbsp;<img width=\"10px\" height=\"10px\"" . 
 	    " src=\"../../images/external.gif\" border=\"0\" />" .
 	    $revisedVersionString . $errataString .
 	    $bibString . $attachmentsString . $notesString . $datasetsString . $softwareString .
-	    $presentationString . $videoString . $mrfString .
+	    $presentationString . $posterString . $videoString . $mrfString .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   } else {
     return ("<p><a href=\"$volume-$paperID.pdf\">$volume-$paperID</a>" . 
 	    $revisedVersionString . $errataString .
 	    $bibString . $attachmentsString . $notesString . $datasetsString . $softwareString .
-	    $presentationString  . $videoString . $mrfString .
+	    $presentationString . $posterString . $videoString . $mrfString .
 	    ": <b>$authorString</b><br><i>$title</i>" .
 	    "\n");
   }
@@ -416,7 +452,10 @@ sub checkNotes {
   chomp $notes;
   $notes =~ /\/([^\/]+)$/;
   $notes = $1;
-  if ($notes ne "") { return $notes; }
+  if ($notes ne "") { 
+    print STDERR "    <attachment type=\"note\">$notes</attachment>\n";
+    return $notes; 
+  }
 }
 
 # Check for the presence of software in the supplementals directory
@@ -429,7 +468,10 @@ sub checkSoftware {
   chomp $software;
   $software =~ /\/([^\/]+)$/;
   $software = $1;
-  if ($software ne "") { return $software; }
+  if ($software ne "") { 
+    print STDERR "    <software>$software</software>\n";
+    return $software; 
+  }
 }
 
 # Check for the presence of datasets in the supplementals directory
@@ -438,11 +480,14 @@ sub checkDatasets {
   my $id = shift @_;
   my ($prefix, undef) = split (//,$volume);
 
-  my $datasets = `ls $supDir/$prefix/$volume/$volume-$id.Datasets* 2>/dev/null`;
+  my $datasets = `ls $supDir/$prefix/$volume/$volume-$id.Dataset* 2>/dev/null`;
   chomp $datasets;
   $datasets =~ /\/([^\/]+)$/;
   $datasets = $1;
-  if ($datasets ne "") { return $datasets; }
+  if ($datasets ne "") {
+    print STDERR "    <dataset>$datasets</dataset>\n";
+    return $datasets;
+  }
 }
 
 # Check for the presence of attachments in the supplementals directory
@@ -456,7 +501,10 @@ sub checkAttachments {
   chomp $attachments;
   $attachments =~ /\/([^\/]+)$/;
   $attachments = $1;
-  if ($attachments ne "") { return $attachments; }
+  if ($attachments ne "") { 
+    print STDERR "    <attachment type=\"attachment\">$attachments</attachment>\n";
+    return $attachments; 
+  }
 }
 
 # Check for the presence of attachments in the supplementals directory
@@ -471,5 +519,26 @@ sub checkPresentations {
   $presentations =~ /\/([^\/]+)$/;
   $presentations = $1;
 #  print STDERR "[ $presentations ]";
-  if ($presentations ne "") { return $presentations; }
+  if ($presentations ne "") { 
+    print STDERR "    <attachment type=\"presentation\">$presentations</attachment>\n"; 
+    return $presentations; 
+  }
+}
+
+# Check for the presence of attachments in the supplementals directory
+sub checkPosters {
+  my $volume = shift @_;
+  my $id = shift @_;
+  my ($prefix, undef) = split (//,$volume);
+
+  my $posters = `ls $supDir/$prefix/$volume/$volume-$id.Poster* 2>/dev/null`;
+#  print STDERR "ls $supDir/$prefix/$volume/$volume-$id.Poster* 2>/dev/null";
+  chomp $posters;
+  $posters =~ /\/([^\/]+)$/;
+  $posters = $1;
+#  print STDERR "[ $posters ]";
+  if ($posters ne "") {
+    print STDERR "    <attachment type=\"poster\">$posters</attachment>\n";
+    return $posters; 
+  }
 }
