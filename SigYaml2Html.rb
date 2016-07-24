@@ -113,8 +113,9 @@ FOOT
       # skip non-relevant files
       if (File.exists?("#{ANTHO_PATH}/#{letter}/#{prefix}/#{prefix}-#{v.split("")[4].to_s}.pdf"))
         if (p.attributes["id"].split("")[0].to_s != v.split("")[4].to_s) then next end
-      else
-        if (p_offset != venue_offset) then next end
+      else if (p_offset != venue_offset) then next end
+#      else if (letter == 'W' && p_offset != venue_offset) then next end
+#        if (letter != 'W' && p_offset[0] != venue_offset[0]) then next end
       end
 
       if !saw_header # handle the header
@@ -195,8 +196,8 @@ FOOT
       authors = p.elements.each("author") { |a|
         author_parts = Array.new
         had_authors = true
-        if (a.text != nil)
-          author_buf = "<author>" + a.text + "</author>"
+        if (a.text != nil and a.text !~ /^\s*$/)
+          author_buf = "<author> BBE" + a.text + "]</author>"
         else 
           a.elements.each { |part|
             author_parts << part.text

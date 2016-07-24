@@ -109,6 +109,7 @@ class ProcessCL
       else
         title.add_text "#{@headers[i]}: #{art_title}"
       end
+
       @authors_last[i].each_with_index do |art_author_last,j|
         author = paper.add_element 'author'
         first = author.add_element 'first'
@@ -118,8 +119,10 @@ class ProcessCL
       end
       doi = paper.add_element 'doi'
       pdfplus = @href[i]
-      doi_href = @href[i].gsub(/\/doi\/pdfplus\//, "")
-      doi.add_text doi_href 
+      if (@href[i] != nil)
+        doi_href = @href[i].gsub(/\/doi\/pdfplus\//, "")
+        doi.add_text doi_href 
+      end
       url = paper.add_element 'url'
       anthology_url = @@ACL_ANTHOLOGY_BASE + "#{vol}#{yr}-#{id}"
       url.add_text anthology_url
@@ -153,8 +156,9 @@ class ProcessCL
   def fetch_paper(href, id) 
     url = "#{@@BASE_URL}#{href}"
     print "fetching #{url} as #{id}"
-    buf = "wget --user-agent #{@@FF_USER_AGENT} #{url} -O #{id}.pdf"
+    buf = "wget --no-check-certificate --user-agent #{@@FF_USER_AGENT} #{url} -O #{id}.pdf"
     print buf
+    print
     system buf
   end
 

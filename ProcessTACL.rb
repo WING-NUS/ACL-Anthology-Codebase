@@ -84,7 +84,7 @@ class ProcessTACL
           year = "#{$3}"
         else
           line.chop!
-          STDERR.puts "# #{@@PROG_NAME} warn\t\tpages month year line looks wrong: \"#{line}\""
+          STDERR.puts "# #{@@PROG_NAME} warn\t\tpages month year line looks wrong: \"#{line}\" for #{counter}"
         end
         @art_pages[counter] = pages
         @art_year[counter] = year
