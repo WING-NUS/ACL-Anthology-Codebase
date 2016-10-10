@@ -158,7 +158,7 @@ while (<$fh>) {
       $author =~ s/^ +//g;
       $author =~ s/ +$//g;
 #      print STDERR "[$authorString]($author)";
-      push (@authors, $authorString);
+      push (@authors, $author);
     } elsif (/<author>(.+)<\/author>/i) {
       my $authorString = $1;
       if ($authorString =~ m/<first>(.+)<\/first><last>(.+)<\/last>/i) {
